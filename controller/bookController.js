@@ -3,14 +3,18 @@ const Book = require('../models/Book');
 
 exports.get = (req, res) => {
   const { query } = req;
-  Book.find(query)
-    .exec()
-    .then((result) => {
-      res.status(200).json({ result });
-    })
-    .catch((err) => {
-      res.status(500).json({ error: err });
+  Book.find(query, (err, results) => {
+    if (err) {
+      return res.send(err);
+    }
+    const returnBooks = results.map((result) => {
+      const newBook = result.toJSON();
+      newBook.links = {};
+      newBook.links.self = `http://${req.headers.host}/books/${result._id}`;
+      return newBook;
     });
+    return res.status(200).json(returnBooks);
+  });
 };
 exports.post = (req, res) => {
   const book = new Book({
